@@ -1,4 +1,4 @@
-from db.database import cursor, conn
+from bd.database import cursor, conn
 
 def add_teacher(full_name: str, photo_path: str = None) -> bool:
     """
