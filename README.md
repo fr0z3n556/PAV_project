@@ -13,23 +13,23 @@ P.s Исправлена 03.09.2025 , нужно сделать окружени
 <img width="257" height="912" alt="project" src="https://github.com/user-attachments/assets/08b78f37-4e8e-479b-a9aa-dd50cfa651f4" />
 
 # ИНСТРУКЦИЯ
-#Установка : 
+# Установка : 
 
-##1) 
-##python -m venv venv
+## 1) 
+## python -m venv venv
 
-##.venv\Scripts\activate     
+## .venv\Scripts\activate     
 
-##2)
-##pip install -r requirements.txt
+## 2)
+## pip install -r requirements.txt
 
-##3)
-##uvicorn app.main:app --reload
+## 3)
+## uvicorn app.main:app --reload
 
-#Использование:
+# Использование:
 
-##Веб-интерфейс : http://localhost:8000
+## Веб-интерфейс : http://localhost:8000
 
-##Документация API : http://localhost:8000/docs
+## Документация API : http://localhost:8000/docs
 
-##Альтернативная документация : http://localhost:8000/redoc
+## Альтернативная документация : http://localhost:8000/redoc
