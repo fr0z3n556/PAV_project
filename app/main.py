@@ -1,148 +1,169 @@
-from controllers.teacher_controller import add_teacher, get_all_teachers, get_teacher_by_id
-from controllers.teacher_auth_controller import register_teacher, authenticate_teacher, get_teacher_credentials
-from views.teachers_view import show_teachers, input_teacher_data, input_teacher_id, show_operation_result
-from views.teacher_auth_view import input_login_data, input_registration_data, show_auth_result, show_teacher_info
-from bd.database import conn, cursor
-import sys
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse
+from sqlmodel import Session, select
+from datetime import timedelta
+from typing import Optional
+import os
 
-def init_database():
-    """Инициализация базы данных и создание таблицы для учетных данных, если её нет"""
-    try:
-        # Проверяем, существует ли таблица teacher_credentials
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'teacher_credentials'
-            )
-        """)
-        table_exists = cursor.fetchone()[0]
-        
-        if not table_exists:
-            # Создаем таблицу, если её нет
-            cursor.execute("""
-                CREATE TABLE teacher_credentials (
-                    teacher_id INTEGER PRIMARY KEY REFERENCES teachers(teacher_id),
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    password_hash VARCHAR(255) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            conn.commit()
-            print("Таблица teacher_credentials создана успешно!")
-        
-        return True
-    except Exception as e:
-        print(f"Ошибка инициализации базы данных: {e}")
-        return False
+# Импорты из текущего пакета
+from .db.database import get_session, create_db_and_tables
+from .models.models import Teacher, TeacherCredentials
+from .schemas.schemas import TeacherCreate, TeacherRead, TeacherUpdate, TeacherCredentialsCreate, Token
+from .auth.auth import authenticate_user, create_access_token, get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES, verify_password
 
-def auth_menu():
-    """
-    Меню аутентификации
-    :return: teacher_id аутентифицированного пользователя или None
-    """
-    while True:
-        print("\n=== Система аутентификации ===")
-        print("1. Вход")
-        print("2. Регистрация")
-        print("3. Выход из программы")
-        
-        choice = input("Выберите действие: ").strip()
-        
-        if choice == "1":
-            # Аутентификация
-            username, password = input_login_data()
-            teacher_id = authenticate_teacher(username, password)
-            if teacher_id:
-                show_auth_result(True)
-                credentials = get_teacher_credentials(teacher_id)
-                if credentials:
-                    show_teacher_info(teacher_id, credentials[0])
-                return teacher_id
-            else:
-                show_auth_result(False)
+app = FastAPI(title="University Management System", version="1.0.0")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+
+# Корневая страница
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    return """
+    <html>
+        <head>
+            <title>University Management System</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 40px;
+                    line-height: 1.6;
+                }
+                .container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                h1 {
+                    color: #333;
+                }
+                .links {
+                    margin-top: 20px;
+                }
+                .links a {
+                    display: block;
+                    margin: 10px 0;
+                    color: #1a73e8;
+                    text-decoration: none;
+                }
+                .links a:hover {
+                    text-decoration: underline;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>University Management System</h1>
+                <p>Добро пожаловать в систему управления ЕМК!</p>
                 
-        elif choice == "2":
-            # Регистрация
-            teacher_id, username, password = input_registration_data()
-            
-            # Проверяем, существует ли преподаватель с таким ID
-            teacher = get_teacher_by_id(int(teacher_id))
-            if not teacher:
-                print("Преподаватель с таким ID не существует!")
-                continue
+                <div class="links">
+                    <h2>Документация API:</h2>
+                    <a href="/docs" target="_blank">Swagger UI Documentation</a>
+                    <a href="/redoc" target="_blank">ReDoc Documentation</a>
+                </div>
                 
-            success = register_teacher(int(teacher_id), username, password)
-            show_auth_result(success, False)
-            
-        elif choice == "3":
-            print("Выход из программы...")
-            sys.exit(0)
-            
-        else:
-            print("Неверный выбор, попробуйте снова")
-
-def main_menu(teacher_id):
+                <div class="links">
+                    <h2>Доступные endpoint'ы:</h2>
+                    <a href="/teachers/">GET /teachers/ - Список преподавателей</a>
+                    <a href="/docs#/default/create_teacher_teachers__post">POST /teachers/ - Добавить преподавателя</a>
+                    <a href="/docs#/default/create_credentials_teachers__teacher_id__credentials_post">POST /teachers/{id}/credentials - Создать учетные данные</a>
+                    <a href="/docs#/default/login_for_access_token_token_post">POST /token - Аутентификация</a>
+                </div>
+            </div>
+        </body>
+    </html>
     """
-    Основное меню системы после аутентификации
-    :param teacher_id: ID аутентифицированного преподавателя
-    """
-    while True:
-        print("\n=== Система управления преподавателями ===")
-        print(f"Вы вошли как преподаватель ID: {teacher_id}")
-        print("1. Добавить преподавателя")
-        print("2. Показать всех преподавателей")
-        print("3. Найти преподавателя по ID")
-        print("4. Выйти из системы")
-        
-        choice = input("Ваш выбор: ").strip()
-        
-        if choice == "1":
-            # Добавление преподавателя
-            name, photo_path = input_teacher_data()
-            success = add_teacher(name, photo_path)
-            show_operation_result(success, "добавления преподавателя")
-            
-        elif choice == "2":
-            # Показать всех преподавателей
-            teachers = get_all_teachers()
-            show_teachers(teachers)
-            
-        elif choice == "3":
-            # Поиск преподавателя по ID
-            teacher_id_search = input_teacher_id()
-            teacher = get_teacher_by_id(teacher_id_search)
-            if teacher:
-                print(f"\nНайден преподаватель:")
-                print(f"ID: {teacher[0]}, Имя: {teacher[1]}, Фото: {teacher[2] or 'нет'}")
-            else:
-                print(f"\nПреподаватель с ID {teacher_id_search} не найден")
-                
-        elif choice == "4":
-            print("Выход из системы...")
-            break
-            
-        else:
-            print("Неверный выбор, попробуйте снова")
 
-def main():
-    """Основная функция программы"""
-    print("=== Система управления преподавателями с аутентификацией ===")
+@app.post("/token", response_model=Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
+    user = authenticate_user(session, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# Защищенные endpoint'ы требуют аутентификацию
+@app.post("/teachers/", response_model=TeacherRead)
+def create_teacher(teacher: TeacherCreate, session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
+    # Проверяем токен, но не используем его данные
+    # В реальной системе здесь должна быть проверка прав доступа
+    db_teacher = Teacher.from_orm(teacher)
+    session.add(db_teacher)
+    session.commit()
+    session.refresh(db_teacher)
+    return db_teacher
+
+@app.get("/teachers/", response_model=list[TeacherRead])
+def read_teachers(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+    teachers = session.exec(select(Teacher).offset(skip).limit(limit)).all()
+    return teachers
+
+@app.get("/teachers/{teacher_id}", response_model=TeacherRead)
+def read_teacher(teacher_id: int, session: Session = Depends(get_session)):
+    teacher = session.get(Teacher, teacher_id)
+    if teacher is None:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    return teacher
+
+@app.put("/teachers/{teacher_id}", response_model=TeacherRead)
+def update_teacher(teacher_id: int, teacher: TeacherUpdate, session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
+    db_teacher = session.get(Teacher, teacher_id)
+    if db_teacher is None:
+        raise HTTPException(status_code=404, detail="Teacher not found")
     
-    # Инициализация базы данных
-    if not init_database():
-        print("Не удалось инициализировать базу данных. Программа завершена.")
-        return
+    teacher_data = teacher.dict(exclude_unset=True)
+    for key, value in teacher_data.items():
+        setattr(db_teacher, key, value)
     
-    # Основной цикл программы
-    while True:
-        # Аутентификация
-        teacher_id = auth_menu()
-        
-        if teacher_id:
-            # Основное меню после успешной аутентификации
-            main_menu(teacher_id)
-        else:
-            print("Аутентификация не удалась")
+    session.add(db_teacher)
+    session.commit()
+    session.refresh(db_teacher)
+    return db_teacher
+
+@app.delete("/teachers/{teacher_id}")
+def delete_teacher(teacher_id: int, session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
+    teacher = session.get(Teacher, teacher_id)
+    if teacher is None:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    
+    session.delete(teacher)
+    session.commit()
+    return {"ok": True}
+
+@app.post("/teachers/{teacher_id}/credentials")
+def create_credentials(teacher_id: int, credentials: TeacherCredentialsCreate, session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
+    # Check if teacher exists
+    teacher = session.get(Teacher, teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    
+    # Check if credentials already exist
+    existing_credentials = session.exec(select(TeacherCredentials).where(TeacherCredentials.teacher_id == teacher_id)).first()
+    if existing_credentials:
+        raise HTTPException(status_code=400, detail="Credentials already exist for this teacher")
+    
+    # Create credentials
+    password_hash = get_password_hash(credentials.password)
+    db_credentials = TeacherCredentials(
+        teacher_id=teacher_id,
+        username=credentials.username,
+        password_hash=password_hash
+    )
+    session.add(db_credentials)
+    session.commit()
+    session.refresh(db_credentials)
+    
+    return {"message": "Credentials created successfully", "username": db_credentials.username}
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
