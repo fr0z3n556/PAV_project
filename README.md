@@ -10,4 +10,4 @@ P.s Исправлена 03.09.2025
 
 ## 14.09.2025 - Была добавлена библиотека ORM sqlmodel - Стало функционированное веб-приложение для преподователей ( Бубличная и Администратора ) Сейчас структур выглядит так : 
 
-![i](https://github.com/user-attachments/assets/c15247aa-542d-4aa0-a555-bf86ac628aa1)
+<img width="257" height="912" alt="project" src="https://github.com/user-attachments/assets/08b78f37-4e8e-479b-a9aa-dd50cfa651f4" />
