@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 from datetime import timedelta
 from typing import Optional
 import os
+import time
 
 # Импорты из текущего пакета
 from .db.database import get_session, create_db_and_tables
@@ -90,6 +91,14 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    print(f"Request took: {process_time} seconds")
+    return response
 
 # Защищенные endpoint'ы требуют аутентификацию
 @app.post("/teachers/", response_model=TeacherRead)

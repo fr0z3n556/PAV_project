@@ -14,9 +14,8 @@ DB_NAME = os.getenv("DB_NAME")
 # Экранируем специальные символы в пароле
 escaped_password = quote_plus(DB_PASSWORD)
 
-DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{escaped_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-engine = create_engine(DATABASE_URL, echo=False)
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{escaped_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}?connect_timeout=10"
+engine = create_engine(DATABASE_URL, echo=False, pool_timeout=10)
 
 def get_session():
     with Session(engine) as session:
