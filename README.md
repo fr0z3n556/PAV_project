@@ -41,11 +41,17 @@ pip install -r requirements.txt
 ## Настроить .env
 
 DB_USER=postgres
+
 DB_PASSWORD=пароль_от_вашей_postgresql
+
 DB_HOST=localhost
+
 DB_PORT=5432
+
 DB_NAME=project
+
 SECRET_KEY=случайный_секретный_ключ_из_32_символов
+
 ALGORITHM=HS256
 
 ## Запустить все :
