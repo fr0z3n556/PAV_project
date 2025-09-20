@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from app.models.models import Teacher
+from app.models import Teacher
 from app.schemas.schemas import TeacherCreate, TeacherUpdate
 
 def get_teacher(session: Session, teacher_id: int):

@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from app.models.models import TeacherCredentials
+from app.models import TeacherCredentials
 from app.schemas.schemas import TeacherCredentialsCreate
 from app.auth.auth import get_password_hash
 

@@ -3,7 +3,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlmodel import Session, select
-from app.models.models import TeacherCredentials
+from app.models import TeacherCredentials
 from app.schemas.schemas import TokenData
 import os
 import secrets

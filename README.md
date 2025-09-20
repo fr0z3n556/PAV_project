@@ -13,12 +13,44 @@ P.s Исправлена 03.09.2025 , нужно сделать окружени
 <img width="257" height="912" alt="project" src="https://github.com/user-attachments/assets/08b78f37-4e8e-479b-a9aa-dd50cfa651f4" />
 
 # ИНСТРУКЦИЯ
-## Установка : 
+##  Как запустить :
 
-1) python -m venv venv
-2) .venv\Scripts\activate     
-3) pip install -r requirements.txt
-4) uvicorn app.main:app --reload
+### Скопировать проект с GitHub
+git clone <ваш-репозиторий>
+cd project
+
+### Создать виртуальное окружение
+python -m venv venv
+
+### Создание ключа в .env
+python -c "import secrets; print(secrets.token_hex(32))"
+
+### Активировать виртуальное окружение
+Для Windows:
+venv\Scripts\activate
+Для Linux/Mac:
+source venv/bin/activate
+
+### Установить зависимости
+pip install -r requirements.txt
+
+## Настроить .env
+
+DB_USER=postgres
+DB_PASSWORD=пароль_от_вашей_postgresql
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=project
+SECRET_KEY=случайный_секретный_ключ_из_32_символов
+ALGORITHM=HS256
+
+## Запустить все :
+
+### Вариант 1: Запуск веб-приложения
+uvicorn app.main:app --reload
+
+### Вариант 2: Запуск консольного приложения
+python main.py
 
 ## Использование:
 

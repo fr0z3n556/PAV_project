@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from app.db.database import get_session, create_db_and_tables
-from app.models.models import Teacher, TeacherCredentials
+from app.models import Teacher, TeacherCredentials
 from app.schemas.schemas import TeacherCreate, TeacherCredentialsCreate
 from app.crud.teacher import create_teacher, get_teachers, get_teacher, update_teacher, delete_teacher
 from app.crud.auth import create_teacher_credentials

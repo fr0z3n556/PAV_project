@@ -1,27 +1,25 @@
 import os
 from sqlmodel import create_engine, Session
-from dotenv import load_dotenv
 from urllib.parse import quote_plus
-
-load_dotenv()
-
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+from app.config import settings  # Импортируем настройки из config.py
 
 # Экранируем специальные символы в пароле
-escaped_password = quote_plus(DB_PASSWORD)
+escaped_password = quote_plus(settings.DB_PASSWORD)
 
-DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{escaped_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}?connect_timeout=10"
-engine = create_engine(DATABASE_URL, echo=False, pool_timeout=10)
+# Формируем строку подключения к базе данных
+DATABASE_URL = f"postgresql+psycopg2://{settings.DB_USER}:{escaped_password}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+
+# Создаем движок для работы с базой данных
+engine = create_engine(DATABASE_URL, echo=False)
 
 def get_session():
+    """Создает и возвращает сессию для работы с базой данных"""
     with Session(engine) as session:
         yield session
 
 def create_db_and_tables():
-    from app.models.models import Teacher, TeacherCredentials
+    """Создает все таблицы в базе данных на основе моделей SQLModel"""
+    from app.models import Teacher, TeacherCredentials, Discipline, Specialty, EducationForm, GroupType, Groups, TeacherWorkload
     from sqlmodel import SQLModel
+    
     SQLModel.metadata.create_all(engine)
