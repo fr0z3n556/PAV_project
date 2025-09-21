@@ -34,6 +34,7 @@ python -c "import secrets; print(secrets.token_hex(32))"
 ### Активировать виртуальное окружение
 Для Windows:
 venv\Scripts\activate
+
 Для Linux/Mac:
 source venv/bin/activate
 
