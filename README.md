@@ -4,9 +4,7 @@
 
 2. Создайте виртуальное окружение с помощью venv:
 
-
-
-source venv/bin/activate
+venv/bin/activate
 
 3. Установка зависимостей
 
@@ -23,7 +21,6 @@ DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/college
 Запустите сервер FastAPI с помощью Uvicorn:
 
 uvicorn app.main:app --reload
-
 
 Теперь приложение доступно по адресу: http://127.0.0.1:8000
 
