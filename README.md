@@ -17,7 +17,6 @@ pip install -r requirements.txt
 4. Настройка переменных окружения
 
 DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/college
-SECRET_KEY=your_secret_key
 
 5. Запуск приложения
 
