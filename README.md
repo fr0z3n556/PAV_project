@@ -4,17 +4,7 @@
 
 2. Создайте виртуальное окружение с помощью venv:
 
-python -m venv venv
 
-
-А затем активируйте его:
-
-Для Windows (PowerShell):
-
-.\venv\Scripts\Activate.ps1
-
-
-Для Linux/Mac:
 
 source venv/bin/activate
 
@@ -25,8 +15,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 4. Настройка переменных окружения
-
-Создайте файл .env в корне проекта и добавьте настройки для базы данных и другие необходимые переменные. Пример содержимого файла:
 
 DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/college
 SECRET_KEY=your_secret_key
