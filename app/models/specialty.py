@@ -1,7 +1,6 @@
 from sqlmodel import SQLModel, Field
 
 class Specialty(SQLModel, table=True):
-    __tablename__ = "specialties"
-    
-    specialty_code: str = Field(max_length=20, primary_key=True)
-    specialty_name: str = Field(max_length=100)
+    id: int = Field(default=None, primary_key=True)
+    code: str = Field(max_length=10)
+    name: str = Field(max_length=255)

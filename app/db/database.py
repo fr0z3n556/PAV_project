@@ -1,25 +1,23 @@
+from sqlmodel import create_engine, SQLModel
+from dotenv import load_dotenv
 import os
-from sqlmodel import create_engine, Session
-from urllib.parse import quote_plus
-from app.config import settings  # Импортируем настройки из config.py
 
-# Экранируем специальные символы в пароле
-escaped_password = quote_plus(settings.DB_PASSWORD)
+load_dotenv()  # Загружаем переменные из .env
 
-# Формируем строку подключения к базе данных
-DATABASE_URL = f"postgresql+psycopg2://{settings.DB_USER}:{escaped_password}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"Попытка подключения к базе данных: {DATABASE_URL}")  # Добавлено сообщение на русском
 
-# Создаем движок для работы с базой данных
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(DATABASE_URL, echo=True)
 
-def get_session():
-    """Создает и возвращает сессию для работы с базой данных"""
-    with Session(engine) as session:
-        yield session
-
-def create_db_and_tables():
-    """Создает все таблицы в базе данных на основе моделей SQLModel"""
-    from app.models import Teacher, TeacherCredentials, Discipline, Specialty, EducationForm, GroupType, Groups, TeacherWorkload
-    from sqlmodel import SQLModel
-    
-    SQLModel.metadata.create_all(engine)
+def init_db():
+    from app.models.specialty import Specialty
+    from app.models.group import Group
+    from app.models.discipline import Discipline
+    from app.models.teacher import Teacher
+    from app.models.workload import Workload
+    print("Создание таблиц...")  # Сообщение на русском
+    try:
+        SQLModel.metadata.create_all(engine)
+        print("Таблицы успешно созданы!")  # Сообщение на русском
+    except Exception as e:
+        print(f"Ошибка при создании таблиц: {e}")  # Ошибка на русском
