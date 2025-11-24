@@ -4,7 +4,9 @@
 
 2. Создайте виртуальное окружение с помощью venv:
 
-venv/bin/activate
+python -m venv venv
+
+venv\Scripts\activate
 
 3. Установка зависимостей
 
@@ -14,7 +16,8 @@ pip install -r requirements.txt
 
 4. Настройка переменных окружения
 
-DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/college
+DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/db_name
+SECRET_KEY=your_secret_key
 
 5. Запуск приложения
 
