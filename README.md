@@ -37,7 +37,7 @@ uvicorn app.main:app --reload
 
 Для запуска тестов используйте pytest:
 
-pytest
+pytest test
 
 ## 7. API документация
 
