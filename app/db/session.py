@@ -1,6 +1,9 @@
 from sqlmodel import Session
 from app.db.database import engine
 
-def get_session():
-    with Session(engine) as session:
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.database import async_session
+
+async def get_session() -> AsyncSession:
+    async with async_session() as session:
         yield session

@@ -1,20 +1,39 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.db.database import init_db
+from fastapi_pagination import add_pagination
+from app.db.database import close_db, init_db
 from app.api.v1.api_router_specialties import router as specialties_router
 from app.api.v1.api_router_groups import router as groups_router
 from app.api.v1.api_router_disciplines import router as disciplines_router
 from app.api.v1.api_router_teachers import router as teachers_router
 from app.api.v1.api_router_workload import router as workload_router
+from app.api.v1.api_router_curriculums import router as curriculums_router
+from app.api.v1.api_router_lesson_types import router as lesson_types_router
+from app.api.v1.users_router import router as users_router
 
-app = FastAPI()
 
-@app.on_event("startup")
-def on_startup():
-    print("Запуск приложения...")  
-    init_db()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+    await close_db()
 
-app.include_router(specialties_router)
-app.include_router(groups_router)
-app.include_router(disciplines_router)
-app.include_router(teachers_router)
-app.include_router(workload_router)
+app = FastAPI(
+    title="Создание и тестирование АРМ учета нагрузки преподавателей колледжа - Пашухин Андрей ИП-31",  
+    description="Сроки выполнения: ----- 1. Разработка REST-сервиса с использованием фреймворка FastAPI : до 15.12.25г ----------- 2. Разработка web-приложения на Django: до 1.05.26г",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Подключаем маршруты 
+app.include_router(users_router, prefix="/api/v1")
+app.include_router(specialties_router, prefix="/api/v1")
+app.include_router(groups_router, prefix="/api/v1")
+app.include_router(disciplines_router, prefix="/api/v1")
+app.include_router(teachers_router, prefix="/api/v1")
+app.include_router(workload_router, prefix="/api/v1")
+app.include_router(curriculums_router, prefix="/api/v1")
+app.include_router(lesson_types_router, prefix="/api/v1")
+
+# Включаем пагинацию для всех маршрутов
+add_pagination(app)

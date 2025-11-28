@@ -1,49 +1,150 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
-from app.models.teacher import Teacher
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.schemas.teacher_schema import TeacherSchema
 from app.db.session import get_session
+from app.controllers.teacher_controller import create_teacher, get_teachers, get_teacher_by_id, update_teacher, delete_teacher, get_teacher_with_workloads
+from app.controllers.workload_controller import get_teacher_workloads_by_year
+from app.core.auth import admin_required, get_current_user
+from app.models.user import Users
+from fastapi_pagination import Page
+
+from app.models.teacher import Teacher
 
 router = APIRouter()
 
-@router.post("/teachers", tags=["Преподаватели"], summary="Создать преподавателя")
-def create_teacher(teacher: Teacher, session: Session = Depends(get_session)):
-    session.add(teacher)
-    session.commit()
-    session.refresh(teacher)
-    return teacher
+@router.post("/teachers", tags=["Teachers"], summary="Создать преподавателя", response_model=TeacherSchema)
+async def create_teacher_route(teacher: Teacher, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Создает преподавателя с помощью контроллера.
+    
+    Параметры:
+    teacher (Teacher): Данные для создания преподавателя.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    TeacherSchema: Созданный преподаватель.
+    """
+    return await create_teacher(teacher, session)
 
-@router.get("/teachers", tags=["Преподаватели"], summary="Получить всех преподавателей")
-def get_teachers(session: Session = Depends(get_session)):
-    teachers = session.exec(select(Teacher)).all()
-    if not teachers:
-        raise HTTPException(status_code=404, detail="Преподаватели не найдены")
-    return teachers
+@router.get("/teachers", tags=["Teachers"], summary="Получить всех преподавателей с пагинацией", response_model=Page[TeacherSchema])
+async def get_teachers_route(session: AsyncSession = Depends(get_session), admin: str = Depends(admin_required)):
+    """
+    Получает всех преподавателей с пагинацией.
+    
+    ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА.
+    
+    Параметры:
+    session (AsyncSession): Сессия для работы с базой данных.
+    
+    Возвращаемое значение:
+    Page[TeacherSchema]: Пагинированный список всех преподавателей.
+    """
+    return await get_teachers(session)
 
-@router.get("/teachers/{id}", tags=["Преподаватели"], summary="Получить преподавателя по ID")
-def get_teacher_by_id(id: int, session: Session = Depends(get_session)):
-    teacher = session.get(Teacher, id)
-    if not teacher:
-        raise HTTPException(status_code=404, detail="Преподаватель не найден")
-    return teacher
+@router.get("/teachers/{id}", tags=["Teachers"], summary="Получить преподавателя по ID", response_model=TeacherSchema)
+async def get_teacher_by_id_route(id: int, session: AsyncSession = Depends(get_session), admin: str = Depends(admin_required)):
+    """
+    Получает преподавателя по ID через контроллер.
+    
+    ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА.
+    
+    Параметры:
+    id (int): ID преподавателя.
+    session (AsyncSession): Сессия для работы с базой данных.
+    
+    Возвращаемое значение:
+    TeacherSchema: Преподаватель по ID.
+    """
+    return await get_teacher_by_id(id, session)
 
-@router.put("/teachers/{id}", tags=["Преподаватели"], summary="Обновить преподавателя")
-def update_teacher(id: int, teacher: Teacher, session: Session = Depends(get_session)):
-    db_teacher = session.get(Teacher, id)
-    if not db_teacher:
-        raise HTTPException(status_code=404, detail="Преподаватель не найден")
-    db_teacher.first_name = teacher.first_name
-    db_teacher.last_name = teacher.last_name
-    db_teacher.patronymic = teacher.patronymic
-    db_teacher.photo = teacher.photo
-    session.commit()
-    session.refresh(db_teacher)
-    return db_teacher
+@router.put("/teachers/{id}", tags=["Teachers"], summary="Обновить преподавателя", response_model=TeacherSchema)
+async def update_teacher_route(id: int, teacher: Teacher, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Обновляет преподавателя по ID с помощью контроллера.
+    
+    Параметры:
+    id (int): ID преподавателя.
+    teacher (Teacher): Новые данные для преподавателя.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    TeacherSchema: Обновленный преподаватель.
+    """
+    return await update_teacher(id, teacher, session)
 
-@router.delete("/teachers/{id}", tags=["Преподаватели"], summary="Удалить преподавателя")
-def delete_teacher(id: int, session: Session = Depends(get_session)):
-    db_teacher = session.get(Teacher, id)
-    if not db_teacher:
-        raise HTTPException(status_code=404, detail="Преподаватель не найден")
-    session.delete(db_teacher)
-    session.commit()
-    return {"message": "Преподаватель удален"}
+@router.delete("/teachers/{id}", tags=["Teachers"], summary="Удалить преподавателя", response_model=TeacherSchema)
+async def delete_teacher_route(id: int, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Удаляет преподавателя по ID через контроллер.
+    
+    Параметры:
+    id (int): ID преподавателя.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    dict: Сообщение об успешном удалении.
+    """
+    return await delete_teacher(id, session)
+
+@router.get("/teachers/{id}/workloads", tags=["Teachers"], summary="Получить преподавателя с нагрузками", response_model=Teacher)
+async def get_teacher_with_workloads_route(
+    id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    Получает преподавателя со всеми его нагрузками.
+    
+    Преподаватель (role=user) может видеть только свою нагрузку.
+    Администратор может видеть любую нагрузку.
+    
+    Параметры:
+    id (int): ID преподавателя.
+    session (AsyncSession): Сессия для работы с базой данных.
+    
+    Возвращаемое значение:
+    Teacher: Преподаватель с загруженными нагрузками.
+    """
+    # Если обычный user - проверяем что он смотрит только свою нагрузку
+    print(f"DEBUG: User role={current_user.role}, teacher_id={current_user.teacher_id}, requested id={id}")
+    if current_user.role == "user":
+        if current_user.teacher_id != id:
+            raise HTTPException(
+                status_code=403,
+                detail="Вы можете просматривать только свою нагрузку"
+            )
+    return await get_teacher_with_workloads(id, session)
+
+@router.get("/teachers/{id}/workloads/year/{year}", tags=["Teachers"], summary="Нагрузка преподавателя за год")
+async def get_teacher_workloads_by_year_route(
+    id: int,
+    year: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    Получает нагрузку конкретного преподавателя за год.
+    
+    Преподаватель (role=user) может видеть только свою нагрузку.
+    Администратор может видеть любую нагрузку.
+    
+    Параметры:
+    id (int): ID преподавателя.
+    year (int): Год.
+    session (AsyncSession): Сессия для работы с базой данных.
+    
+    Возвращаемое значение:
+    list[Workload]: Список нагрузок с дисциплинами.
+    """
+    # Если обычный user - проверяем что он смотрит только свою нагрузку
+    print(f"DEBUG: User role={current_user.role}, teacher_id={current_user.teacher_id}, requested id={id}")
+    if current_user.role == "user":
+        if current_user.teacher_id != id:
+            raise HTTPException(
+                status_code=403,
+                detail="Вы можете просматривать только свою нагрузку"
+            )
+    return await get_teacher_workloads_by_year(id, year, session)

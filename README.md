@@ -1,39 +1,36 @@
 # Документация проекта
 
-1. Создание и активация виртуального окружения
+## 1. Откройте проект
 
-2. Создайте виртуальное окружение с помощью venv:
+## 2. Создайте виртуальное окружение с помощью venv:
 
+python -m venv venv
 
+venv\Scripts\activate
 
-source venv/bin/activate
-
-3. Установка зависимостей
-
-Установите все зависимости проекта из файла requirements.txt:
+## 3. Установите все зависимости проекта из файла requirements.txt
 
 pip install -r requirements.txt
 
-4. Настройка переменных окружения
+## 4. Настройка переменных окружения
 
-DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/college
+DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/db_name
 SECRET_KEY=your_secret_key
 
-5. Запуск приложения
+## 5. Запуск приложения
 
 Запустите сервер FastAPI с помощью Uvicorn:
 
 uvicorn app.main:app --reload
 
-
 Теперь приложение доступно по адресу: http://127.0.0.1:8000
 
-6. Тестирование приложения
+## 6. Тестирование приложения
 
 Для запуска тестов используйте pytest:
 
 pytest
 
-7. API документация
+## 7. API документация
 
 Документация API доступна по адресу: http://127.0.0.1:8000/docs

@@ -1,51 +1,83 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.discipline import Discipline
+from app.models.schemas.discipline_schema import DisciplineSchema
 from app.db.session import get_session
+from app.controllers.discipline_controller import create_discipline, get_disciplines, get_discipline_by_id, update_discipline, delete_discipline
+from app.core.auth import admin_required
+from fastapi_pagination import Page
 
 router = APIRouter()
 
-@router.post("/disciplines", tags=["Дисциплины"], summary="Создать дисциплину")
-def create_discipline(discipline: Discipline, session: Session = Depends(get_session)):
-    try:
-        session.add(discipline)
-        session.commit()
-        session.refresh(discipline)
-        return discipline
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Не удалось добавить дисциплину")
+@router.post("/disciplines", tags=["Disciplines"], summary="Создать дисциплину", response_model=DisciplineSchema)
+async def create_discipline_route(discipline: Discipline, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Создает дисциплину с помощью контроллера.
+    
+    Параметры:
+    discipline (Discipline): Данные для создания дисциплины.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    DisciplineSchema: Созданная дисциплина.
+    """
+    return await create_discipline(discipline, session)
 
-@router.get("/disciplines", tags=["Дисциплины"], summary="Получить все дисциплины")
-def get_disciplines(session: Session = Depends(get_session)):
-    disciplines = session.exec(select(Discipline)).all()
-    if not disciplines:
-        raise HTTPException(status_code=404, detail="Дисциплины не найдены")
-    return disciplines
+@router.get("/disciplines", tags=["Disciplines"], summary="Получить все дисциплины с пагинацией", response_model=Page[DisciplineSchema])
+async def get_disciplines_route(session: AsyncSession = Depends(get_session)):
+    """
+    Получает все дисциплины с пагинацией.
 
-@router.get("/disciplines/{id}", tags=["Дисциплины"], summary="Получить дисциплину по ID")
-def get_discipline_by_id(id: int, session: Session = Depends(get_session)):
-    discipline = session.get(Discipline, id)
-    if not discipline:
-        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
-    return discipline
+    Параметры:
+    session (AsyncSession): Сессия для работы с базой данных.
 
-@router.put("/disciplines/{id}", tags=["Дисциплины"], summary="Обновить дисциплину")
-def update_discipline(id: int, discipline: Discipline, session: Session = Depends(get_session)):
-    db_discipline = session.get(Discipline, id)
-    if not db_discipline:
-        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
-    db_discipline.name = discipline.name
-    db_discipline.theoretical_hours = discipline.theoretical_hours
-    db_discipline.practical_hours = discipline.practical_hours
-    session.commit()
-    session.refresh(db_discipline)
-    return db_discipline
+    Возвращаемое значение:
+    Page[DisciplineSchema]: Пагинированный список всех дисциплин.
+    """
+    return await get_disciplines(session)
 
-@router.delete("/disciplines/{id}", tags=["Дисциплины"], summary="Удалить дисциплину")
-def delete_discipline(id: int, session: Session = Depends(get_session)):
-    db_discipline = session.get(Discipline, id)
-    if not db_discipline:
-        raise HTTPException(status_code=404, detail="Дисциплина не найдена")
-    session.delete(db_discipline)
-    session.commit()
-    return {"message": "Дисциплина удалена"}
+@router.get("/disciplines/{id}", tags=["Disciplines"], summary="Получить дисциплину по ID", response_model=DisciplineSchema)
+async def get_discipline_by_id_route(id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Получает дисциплину по ID через контроллер.
+    
+    Параметры:
+    id (int): ID дисциплины.
+    session (AsyncSession): Сессия для работы с базой данных.
+
+    Возвращаемое значение:
+    DisciplineSchema: Дисциплина по ID.
+    """
+    return await get_discipline_by_id(id, session)
+
+@router.put("/disciplines/{id}", tags=["Disciplines"], summary="Обновить дисциплину", response_model=DisciplineSchema)
+async def update_discipline_route(id: int, discipline: Discipline, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Обновляет дисциплину по ID с помощью контроллера.
+    
+    Параметры:
+    id (int): ID дисциплины.
+    discipline (Discipline): Новые данные для дисциплины.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    DisciplineSchema: Обновленная дисциплина.
+    """
+    return await update_discipline(id, discipline, session)
+
+@router.delete("/disciplines/{id}", tags=["Disciplines"], summary="Удалить дисциплину", response_model=DisciplineSchema)
+async def delete_discipline_route(id: int, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Удаляет дисциплину по ID через контроллер.
+    
+    Параметры:
+    id (int): ID дисциплины.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    dict: Сообщение об успешном удалении.
+    """
+    return await delete_discipline(id, session)

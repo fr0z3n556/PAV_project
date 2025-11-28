@@ -1,12 +1,10 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
 
-class Discipline(SQLModel, table=True):
+class DisciplineSchema(BaseModel):
     """
-    Модель дисциплины.
+    Схема для валидации дисциплины.
 
     Параметры:
-    id (int): Уникальный идентификатор дисциплины.
     code (str): Код дисциплины.
     name (str): Название дисциплины.
     theoretical_hours (int): Часы теоретического обучения.
@@ -15,17 +13,24 @@ class Discipline(SQLModel, table=True):
     course_project_hours (int): Часы на курсовую работу.
     semester (int): Семестр, в котором преподается дисциплина.
     """
-    id: int = Field(default=None, primary_key=True)
-    code: str = Field(max_length=10, unique=True, index=True)  # Код дисциплины
-    name: str = Field(max_length=255)  # Название дисциплины
+    code: str  # Код дисциплины
+    name: str  # Название дисциплины
     theoretical_hours: int  # Часы теоретического обучения
     practical_hours: int  # Часы практического обучения
     self_work_hours: int  # Часы самостоятельной работы
     course_project_hours: int  # Часы на курсовую работу
     semester: int  # Семестр
-    
-    # Relationship: одна дисциплина -> много нагрузок
-    workloads: List["Workload"] = Relationship(back_populates="discipline")
-    
-    # Relationship: одна дисциплина -> много записей учебного плана
-    curriculums: List["Curriculum"] = Relationship(back_populates="discipline")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "code": "Математика",
+                "name": "Математика для ИТ",
+                "theoretical_hours": 40,
+                "practical_hours": 20,
+                "self_work_hours": 30,
+                "course_project_hours": 50,
+                "semester": 2
+            }
+        }
+    )

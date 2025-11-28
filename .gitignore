@@ -1,8 +1,20 @@
-# Игнорируемые файлы
-.vscode
-.env
-venv
-__pycache__
-.backup
-.sql
-.pytest_cache
+# Виртуальные окружения
+venv/
+.env/
+*.env
+
+# Кэшированные файлы
+__pycache__/
+.mypy_cache/
+.pyre/
+
+# IDE файлы
+.idea/
+.vscode/
+
+# Лог файлы
+*.log
+
+# Папки и файлы, которые не относятся к реализации
+*.swp
+*.bak

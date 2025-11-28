@@ -1,49 +1,97 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.schemas.group_schema import GroupSchema
 from app.models.group import Group
 from app.db.session import get_session
+from app.controllers.group_controller import create_group, get_groups, get_group_by_id, update_group, delete_group, get_group_with_specialty
+from app.core.auth import admin_required
+from fastapi_pagination import Page
 
 router = APIRouter()
 
-@router.post("/groups", tags=["Группы"], summary="Создать группу")
-def create_group(group: Group, session: Session = Depends(get_session)):
-    session.add(group)
-    session.commit()
-    session.refresh(group)
-    return group
+@router.post("/groups", tags=["Groups"], summary="Создать группу", response_model=GroupSchema)
+async def create_group_route(group: Group, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Создает группу с помощью контроллера.
+    
+    Параметры:
+    group (Group): Данные для создания группы.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    GroupSchema: Созданная группа.
+    """
+    return await create_group(group, session)
 
-@router.get("/groups", tags=["Группы"], summary="Получить все группы")
-def get_groups(session: Session = Depends(get_session)):
-    groups = session.exec(select(Group)).all()
-    if not groups:
-        raise HTTPException(status_code=404, detail="Группы не найдены")
-    return groups
+@router.get("/groups", tags=["Groups"], summary="Получить все группы с пагинацией", response_model=Page[GroupSchema])
+async def get_groups_route(session: AsyncSession = Depends(get_session)):
+    """
+    Получает все группы с пагинацией.
 
-@router.get("/groups/{id}", tags=["Группы"], summary="Получить группу по ID")
-def get_group_by_id(id: int, session: Session = Depends(get_session)):
-    group = session.get(Group, id)
-    if not group:
-        raise HTTPException(status_code=404, detail="Группа не найдена")
-    return group
+    Параметры:
+    session (AsyncSession): Сессия для работы с базой данных.
 
-@router.put("/groups/{id}", tags=["Группы"], summary="Обновить группу")
-def update_group(id: int, group: Group, session: Session = Depends(get_session)):
-    db_group = session.get(Group, id)
-    if not db_group:
-        raise HTTPException(status_code=404, detail="Группа не найдена")
-    db_group.group_number = group.group_number
-    db_group.specialty_code = group.specialty_code
-    db_group.form = group.form
-    db_group.group_type = group.group_type
-    session.commit()
-    session.refresh(db_group)
-    return db_group
+    Возвращаемое значение:
+    Page[GroupSchema]: Пагинированный список всех групп.
+    """
+    return await get_groups(session)
 
-@router.delete("/groups/{id}", tags=["Группы"], summary="Удалить группу")
-def delete_group(id: int, session: Session = Depends(get_session)):
-    db_group = session.get(Group, id)
-    if not db_group:
-        raise HTTPException(status_code=404, detail="Группа не найдена")
-    session.delete(db_group)
-    session.commit()
-    return {"message": "Группа удалена"}
+@router.get("/groups/{id}", tags=["Groups"], summary="Получить группу по ID", response_model=GroupSchema)
+async def get_group_by_id_route(id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Получает группу по ID через контроллер.
+    
+    Параметры:
+    id (int): ID группы.
+    session (AsyncSession): Сессия для работы с базой данных.
+
+    Возвращаемое значение:
+    GroupSchema: Группа по ID.
+    """
+    return await get_group_by_id(id, session)
+
+@router.put("/groups/{id}", tags=["Groups"], summary="Обновить группу", response_model=GroupSchema)
+async def update_group_route(id: int, group: Group, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Обновляет группу по ID с помощью контроллера.
+    
+    Параметры:
+    id (int): ID группы.
+    group (Group): Новые данные для группы.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    GroupSchema: Обновленная группа.
+    """
+    return await update_group(id, group, session)
+
+@router.delete("/groups/{id}", tags=["Groups"], summary="Удалить группу", response_model=GroupSchema)
+async def delete_group_route(id: int, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
+    """
+    Удаляет группу по ID через контроллер.
+    
+    Параметры:
+    id (int): ID группы.
+    session (AsyncSession): Сессия для работы с базой данных.
+    current_user (str): Пользователь, выполняющий запрос, проверяется на роль администратора.
+    
+    Возвращаемое значение:
+    dict: Сообщение об успешном удалении.
+    """
+    return await delete_group(id, session)
+
+@router.get("/groups/{id}/with-specialty", tags=["Groups"], summary="Получить группу со специальностью", response_model=Group)
+async def get_group_with_specialty_route(id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Получает группу со специальностью.
+    
+    Параметры:
+    id (int): ID группы.
+    session (AsyncSession): Сессия для работы с базой данных.
+    
+    Возвращаемое значение:
+    Group: Группа с загруженной специальностью.
+    """
+    return await get_group_with_specialty(id, session)
