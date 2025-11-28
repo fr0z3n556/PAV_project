@@ -8,10 +8,7 @@ from app.controllers.lesson_type_controller import create_lesson_type,get_lesson
 from fastapi_pagination import Page
 from app.core.auth import admin_required
 
-router = APIRouter(
-    prefix="/lesson-types",
-    tags=["Lesson Types"]
-)
+router = APIRouter(prefix="/lesson-types",tags=["Lesson Types"])
 
 @router.post("", response_model=LessonType, summary="Создать тип занятия")
 async def create_lesson_type_route(lesson_type: LessonTypeSchema,session: Session = Depends(get_session),current_user = Depends(admin_required)):

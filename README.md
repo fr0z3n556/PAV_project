@@ -12,10 +12,18 @@ venv\Scripts\activate
 
 pip install -r requirements.txt
 
+pip install alembic
+
+alembic init alembic
+
 ## 4. Настройка переменных окружения
 
-DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/db_name
-SECRET_KEY=your_secret_key
+Создайте файл `.env` со следующими переменными:
+
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/db_name
+SECRET_KEY=your_secret_key_here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 ## 5. Запуск приложения
 
