@@ -16,6 +16,8 @@ pip install alembic
 
 alembic init alembic
 
+pip install email-validator
+
 ## 4. Настройка переменных окружения
 
 Создайте файл `.env` со следующими переменными:

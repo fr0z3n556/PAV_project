@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.schemas.teacher_schema import TeacherSchema
+from app.models.schemas.message_schema import MessageSchema
 from app.db.session import get_session
 from app.controllers.teacher_controller import create_teacher, get_teachers, get_teacher_by_id, update_teacher, delete_teacher, get_teacher_with_workloads
 from app.controllers.workload_controller import get_teacher_workloads_by_year
@@ -12,7 +13,7 @@ from app.models.teacher import Teacher
 
 router = APIRouter()
 
-@router.post("/teachers", tags=["Teachers"], summary="Создать преподавателя", response_model=TeacherSchema)
+@router.post("/teachers", tags=["Teachers"], summary="Создать преподавателя (Администратор)", response_model=TeacherSchema)
 async def create_teacher_route(teacher: Teacher, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
     """
     Создает преподавателя с помощью контроллера.
@@ -27,7 +28,7 @@ async def create_teacher_route(teacher: Teacher, session: AsyncSession = Depends
     """
     return await create_teacher(teacher, session)
 
-@router.get("/teachers", tags=["Teachers"], summary="Получить всех преподавателей с пагинацией", response_model=Page[TeacherSchema])
+@router.get("/teachers", tags=["Teachers"], summary="Получить всех преподавателей с пагинацией (Администратор)", response_model=Page[TeacherSchema])
 async def get_teachers_route(session: AsyncSession = Depends(get_session), admin: str = Depends(admin_required)):
     """
     Получает всех преподавателей с пагинацией.
@@ -42,7 +43,7 @@ async def get_teachers_route(session: AsyncSession = Depends(get_session), admin
     """
     return await get_teachers(session)
 
-@router.get("/teachers/{id}", tags=["Teachers"], summary="Получить преподавателя по ID", response_model=TeacherSchema)
+@router.get("/teachers/{id}", tags=["Teachers"], summary="Получить преподавателя по ID (Администратор)", response_model=TeacherSchema)
 async def get_teacher_by_id_route(id: int, session: AsyncSession = Depends(get_session), admin: str = Depends(admin_required)):
     """
     Получает преподавателя по ID через контроллер.
@@ -58,7 +59,7 @@ async def get_teacher_by_id_route(id: int, session: AsyncSession = Depends(get_s
     """
     return await get_teacher_by_id(id, session)
 
-@router.put("/teachers/{id}", tags=["Teachers"], summary="Обновить преподавателя", response_model=TeacherSchema)
+@router.put("/teachers/{id}", tags=["Teachers"], summary="Обновить преподавателя (Администратор)", response_model=TeacherSchema)
 async def update_teacher_route(id: int, teacher: Teacher, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
     """
     Обновляет преподавателя по ID с помощью контроллера.
@@ -74,7 +75,7 @@ async def update_teacher_route(id: int, teacher: Teacher, session: AsyncSession 
     """
     return await update_teacher(id, teacher, session)
 
-@router.delete("/teachers/{id}", tags=["Teachers"], summary="Удалить преподавателя", response_model=TeacherSchema)
+@router.delete("/teachers/{id}", tags=["Teachers"], summary="Удалить преподавателя (Администратор)", response_model=MessageSchema)
 async def delete_teacher_route(id: int, session: AsyncSession = Depends(get_session), current_user: str = Depends(admin_required)):
     """
     Удаляет преподавателя по ID через контроллер.
@@ -89,7 +90,7 @@ async def delete_teacher_route(id: int, session: AsyncSession = Depends(get_sess
     """
     return await delete_teacher(id, session)
 
-@router.get("/teachers/{id}/workloads", tags=["Teachers"], summary="Получить преподавателя с нагрузками", response_model=Teacher)
+@router.get("/teachers/{id}/workloads", tags=["Teachers"], summary="Получить преподавателя с нагрузками (Преподаватель, Администратор)", response_model=Teacher)
 async def get_teacher_with_workloads_route(
     id: int,
     session: AsyncSession = Depends(get_session),
@@ -118,7 +119,7 @@ async def get_teacher_with_workloads_route(
             )
     return await get_teacher_with_workloads(id, session)
 
-@router.get("/teachers/{id}/workloads/year/{year}", tags=["Teachers"], summary="Нагрузка преподавателя за год")
+@router.get("/teachers/{id}/workloads/year/{year}", tags=["Teachers"], summary="Нагрузка преподавателя за год (Преподаватель, Администратор)")
 async def get_teacher_workloads_by_year_route(
     id: int,
     year: int,

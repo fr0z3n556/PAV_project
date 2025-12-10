@@ -1,4 +1,7 @@
 from contextlib import asynccontextmanager
+import email
+from operator import concat
+from os import name
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from app.db.database import close_db, init_db
@@ -19,10 +22,14 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 app = FastAPI(
-    title="Создание и тестирование АРМ учета нагрузки преподавателей колледжа - Пашухин Андрей ИП-31",  
-    description="Сроки выполнения: ----- 1. Разработка REST-сервиса с использованием фреймворка FastAPI : до 15.12.25г ----------- 2. Разработка web-приложения на Django: до 1.05.26г",
+    title="Создание и тестирование АРМ учета нагрузки преподавателей колледжа ",  
+    description="Сроки выполнения: 1. Разработка REST-сервиса с использованием фреймворка FastAPI : до 15.12.25г 2. Разработка web-приложения на Django: до 1.05.26г",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    contact={
+        "name": "Пашухин Андрей Викторович ИП-31",
+        "email": "pashuhin@mail.ru"
+        },
 )
 
 # Подключаем маршруты 
